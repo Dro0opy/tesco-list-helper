@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tesco List Helper</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .note {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tesco Shopping List Launcher</h1>
+  <p>Paste your shopping list below (one item per line or comma-separated):</p>
+  <textarea id="shoppingList" placeholder="e.g. Potatoes, Bananas, Apples"></textarea>
+  <button onclick="launchSearch()">Search on Tesco</button>
+  <p class="note">This will open each item in a new tab using Tesco's search page.</p>
+
+  <script>
+    function launchSearch() {
+      const rawList = document.getElementById('shoppingList').value;
+      const items = rawList
+        .split(/[\n,]+/)
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+      
+      const delay = 1000; // 1 sec between tabs to avoid being blocked
+      items.forEach((item, i) => {
+        setTimeout(() => {
+          const url = `https://www.tesco.com/groceries/en-GB/search?query=${encodeURIComponent(item)}`;
+          window.open(url, '_blank');
+        }, i * delay);
+      });
+    }
+  </script>
+</body>
+</html>
