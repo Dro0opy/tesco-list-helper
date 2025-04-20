@@ -27,28 +27,60 @@
       color: #666;
       margin-top: 10px;
     }
+    ul.preview {
+      margin-top: 10px;
+      padding-left: 20px;
+    }
   </style>
 </head>
 <body>
   <h1>Tesco Shopping List Launcher</h1>
-  <p>Paste your shopping list below (one item per line or comma-separated):</p>
-  <textarea id="shoppingList" placeholder="e.g. Potatoes, Bananas, Apples"></textarea>
-  <button onclick="launchSearch()">Search on Tesco</button>
-  <p class="note">This will open each item in a new tab using Tesco's search page.</p>
+  <p>Paste your shopping list below (format: <code>item | quantity</code>):</p>
+  <textarea id="shoppingList" placeholder="e.g. kitchen roll | 4\napple juice | 2"></textarea>
+  <button onclick="previewList()">Preview List</button>
+  <div id="previewContainer" style="display:none">
+    <h2>Preview:</h2>
+    <ul class="preview" id="previewList"></ul>
+    <button onclick="launchSearch()">Search on Tesco</button>
+  </div>
+  <p class="note">Each item will open in a new tab with a visual quantity cue added to the tab title. Does not affect search results.</p>
 
   <script>
-    function launchSearch() {
+    let parsedItems = [];
+
+    function previewList() {
       const rawList = document.getElementById('shoppingList').value;
-      const items = rawList
-        .split(/[\n,]+/)
-        .map(item => item.trim())
-        .filter(item => item.length > 0);
-      
-      const delay = 1000; // 1 sec between tabs to avoid being blocked
-      items.forEach((item, i) => {
+      parsedItems = rawList
+        .split(/\n+/)
+        .map(line => line.split('|').map(s => s.trim()))
+        .filter(([item]) => item.length > 0);
+
+      const previewEl = document.getElementById('previewList');
+      previewEl.innerHTML = '';
+      parsedItems.forEach(([item, qty]) => {
+        const li = document.createElement('li');
+        li.textContent = `${item}${qty ? ' (x' + qty + ')' : ''}`;
+        previewEl.appendChild(li);
+      });
+
+      document.getElementById('previewContainer').style.display = 'block';
+    }
+
+    function launchSearch() {
+      const delay = 1000;
+      parsedItems.forEach(([item, qty], i) => {
         setTimeout(() => {
           const url = `https://www.tesco.com/groceries/en-GB/search?query=${encodeURIComponent(item)}`;
-          window.open(url, '_blank');
+          const newTab = window.open(url, '_blank');
+          if (newTab) {
+            newTab.onload = function() {
+              try {
+                newTab.document.title += qty ? ` (x${qty})` : '';
+              } catch (e) {
+                console.log('Tab loaded but title could not be set (possibly due to cross-origin restriction)');
+              }
+            };
+          }
         }, i * delay);
       });
     }
